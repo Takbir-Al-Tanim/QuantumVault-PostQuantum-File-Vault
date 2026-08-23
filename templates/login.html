@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Login · QuantumVault{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <section class="card auth-card clean-auth">
+    <div class="auth-logo">QV</div>
+    <span class="eyebrow">Welcome back</span>
+    <h1>Login to your vault</h1>
+    <p class="muted">Your files stay encrypted at rest. Decryption is performed only after ownership and integrity checks.</p>
+    <form method="post" class="stack-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Email<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
+      <label>Password<input name="password" type="password" required autocomplete="current-password" placeholder="Your password"></label>
+      <button class="btn btn-primary btn-large" type="submit">Login</button>
+    </form>
+    <p class="muted small">No account? <a href="{{ url_for('register') }}">Create one</a></p>
+  </section>
+</div>
+{% endblock %}

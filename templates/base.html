@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}QuantumVault{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="{% if nav_user %}app-body{% else %}public-body{% endif %}">
+{% if nav_user %}
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="sidebar-brand" href="{{ url_for('dashboard') }}">
+        <span class="brand-mark">QV</span>
+        <span><strong>QuantumVault</strong><small>Encrypted workspace</small></span>
+      </a>
+
+      {% if request.endpoint == 'dashboard' %}
+      <button class="new-button" id="sidebarNewBtn" type="button"><span class="plus-icon">+</span><span>New</span></button>
+      {% else %}
+      <a class="new-button" href="{{ url_for('dashboard') }}"><span class="plus-icon">+</span><span>New</span></a>
+      {% endif %}
+
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="side-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span class="nav-icon">▣</span><span>My Vault</span></a>
+        <a class="side-link {% if request.endpoint == 'sharing' %}active{% endif %}" href="{{ url_for('sharing') }}"><span class="nav-icon">♧</span><span>Shared</span></a>
+        <a class="side-link {% if request.endpoint == 'performance' %}active{% endif %}" href="{{ url_for('performance') }}"><span class="nav-icon">⌁</span><span>Performance</span></a>
+        <a class="side-link {% if request.endpoint == 'audit_page' %}active{% endif %}" href="{{ url_for('audit_page') }}"><span class="nav-icon">◷</span><span>Activity</span></a>
+        <a class="side-link {% if request.endpoint == 'learn' %}active{% endif %}" href="{{ url_for('learn') }}"><span class="nav-icon">?</span><span>How security works</span></a>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-security">
+        <div class="shield-dot">✓</div>
+        <div><strong>Encrypted at rest</strong><small>ML-KEM · HKDF · ChaCha20</small></div>
+      </div>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="side-link logout-link" type="submit"><span class="nav-icon">↪</span><span>Sign out</span></button>
+      </form>
+    </aside>
+
+    <section class="app-main">
+      <header class="appbar">
+        <button class="mobile-menu" id="mobileMenuBtn" type="button" aria-label="Open navigation">☰</button>
+        <form class="global-search" action="{{ url_for('dashboard') }}" method="get">
+          <span class="search-icon">⌕</span>
+          <input type="search" name="q" value="{{ q|default('') }}" placeholder="Search in QuantumVault" autocomplete="off">
+        </form>
+        <div class="appbar-actions">
+          {% if request.endpoint in ['dashboard','sharing'] %}
+          <button type="button" class="icon-text-button" id="globalCryptoDemoBtn"><span>◈</span><span>Crypto demo</span></button>
+          {% else %}
+          <a class="icon-text-button" href="{{ url_for('learn') }}"><span>◈</span><span>Crypto demo</span></a>
+          {% endif %}
+          <div class="user-avatar" title="{{ nav_user.name }}">{{ nav_user.name[:1]|upper }}</div>
+        </div>
+      </header>
+
+      <main class="content-shell">
+{% else %}
+  <header class="public-topbar">
+    <div class="public-topbar-inner">
+      <a class="sidebar-brand" href="{{ url_for('index') }}">
+        <span class="brand-mark">QV</span>
+        <span><strong>QuantumVault</strong><small>Post-quantum file security</small></span>
+      </a>
+      <nav class="public-nav">
+        <a href="{{ url_for('learn') }}">How it works</a>
+        <a href="{{ url_for('login') }}">Sign in</a>
+        <a class="primary-button" href="{{ url_for('register') }}">Create account</a>
+      </nav>
+    </div>
+  </header>
+  <main class="public-shell">
+{% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+{% if nav_user %}
+      </main>
+    </section>
+  </div>
+{% else %}
+  </main>
+{% endif %}
+
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+<script>
+(() => {
+  const btn = document.getElementById('mobileMenuBtn');
+  const side = document.getElementById('sidebar');
+  const back = document.getElementById('sidebarBackdrop');
+  if (btn && side && back) {
+    const close = () => { side.classList.remove('open'); back.classList.remove('show'); };
+    btn.addEventListener('click', () => { side.classList.toggle('open'); back.classList.toggle('show'); });
+    back.addEventListener('click', close);
+  }
+})();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

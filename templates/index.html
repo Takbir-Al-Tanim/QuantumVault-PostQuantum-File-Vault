@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}QuantumVault · Understandable Post-Quantum Security{% endblock %}
+{% block content %}
+<section class="hero hero-friendly">
+  <div class="hero-copy">
+    <span class="eyebrow">Secure files + learn what happens</span>
+    <h1>Your secure file vault should not feel like a black box.</h1>
+    <p class="lead">Upload a file normally, share it with another registered user, or download it. QuantumVault protects file keys with ML-KEM-768, derives keys with HKDF-SHA256, and encrypts with ChaCha20-Poly1305 while a live guide explains every step beside your work.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary btn-large" href="{{ url_for('register') }}">Start with a free demo account</a>
+      <a class="btn btn-secondary btn-large" href="{{ url_for('learn') }}">See how the algorithms work</a>
+    </div>
+    <div class="trust-row">
+      <span>✓ Ciphertext-only storage</span><span>✓ Secure sharing + revoke</span><span>✓ Live crypto visualization</span><span>✓ Performance metrics</span>
+    </div>
+  </div>
+
+  <div class="card hero-demo">
+    <div class="mini-window-head"><span></span><span></span><span></span><strong>Live Crypto Guide</strong></div>
+    <div class="simple-pipeline vertical">
+      <div class="pipeline-item"><b>1</b><div><strong>ML-KEM-768</strong><small>Create a shared secret safely</small></div><span>Key agreement</span></div>
+      <div class="pipeline-line"></div>
+      <div class="pipeline-item"><b>2</b><div><strong>HKDF-SHA256</strong><small>Turn that secret into a file key</small></div><span>Key derivation</span></div>
+      <div class="pipeline-line"></div>
+      <div class="pipeline-item"><b>3</b><div><strong>ChaCha20-Poly1305</strong><small>Encrypt the file + detect tampering</small></div><span>AEAD</span></div>
+    </div>
+    <div class="demo-note">The live version also shows input → operation → output, what each step protects, and the measured time.</div>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="section-title center"><span class="eyebrow">Three algorithms, three simple jobs</span><h2>No cryptography background required</h2></div>
+  <div class="friendly-card-grid">
+    <article class="friendly-card"><div class="friendly-icon">🔐</div><span class="step-chip">STEP 1</span><h3>ML-KEM-768</h3><p><strong>Job:</strong> creates a temporary shared secret without sending that secret as plain data.</p><div class="mini-io"><span>Public key</span><b>→</b><span>Shared secret + KEM ciphertext</span></div></article>
+    <article class="friendly-card"><div class="friendly-icon">🧩</div><span class="step-chip">STEP 2</span><h3>HKDF-SHA256</h3><p><strong>Job:</strong> turns the shared secret into a clean, fixed 256-bit key made specifically for this file.</p><div class="mini-io"><span>Secret + salt</span><b>→</b><span>32-byte file key</span></div></article>
+    <article class="friendly-card"><div class="friendly-icon">🛡️</div><span class="step-chip">STEP 3</span><h3>ChaCha20-Poly1305</h3><p><strong>Job:</strong> hides the file contents and adds a tag so modified ciphertext is rejected.</p><div class="mini-io"><span>File + key + nonce</span><b>→</b><span>Ciphertext + auth tag</span></div></article>
+  </div>
+</section>
+{% endblock %}

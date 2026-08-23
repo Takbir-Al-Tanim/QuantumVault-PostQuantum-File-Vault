@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Create Account · QuantumVault{% endblock %}
+{% block content %}
+<div class="auth-wrap auth-split">
+  <section class="card auth-card">
+    <span class="eyebrow">Create your vault</span>
+    <h1>Register</h1>
+    <p class="muted">You only create a normal account. The system automatically prepares your post-quantum ML-KEM key pair in the background.</p>
+    <form method="post" class="stack-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Your name<input name="name" required minlength="2" autocomplete="name" placeholder="e.g. Tanim"></label>
+      <label>Email<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
+      <label>Password<input name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label>
+      <button class="btn btn-primary btn-large" type="submit">Create Secure Account</button>
+    </form>
+    <p class="muted small">Already registered? <a href="{{ url_for('login') }}">Login</a></p>
+  </section>
+  <aside class="auth-help card">
+    <span class="eyebrow">What happens automatically?</span>
+    <div class="auth-help-step"><b>1</b><span><strong>ML-KEM key pair</strong><small>A public key and secret key are generated.</small></span></div>
+    <div class="auth-help-step"><b>2</b><span><strong>Secret key protected</strong><small>The secret key is wrapped before database storage.</small></span></div>
+    <div class="auth-help-step"><b>3</b><span><strong>You use the app normally</strong><small>No manual key handling is required.</small></span></div>
+  </aside>
+</div>
+{% endblock %}

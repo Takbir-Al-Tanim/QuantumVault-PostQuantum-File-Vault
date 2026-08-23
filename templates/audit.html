@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}Activity · QuantumVault{% endblock %}
+{% block content %}
+<section class="page-title-simple"><div><h1>Activity</h1><p>Security-relevant actions on your account.</p></div></section>
+<section class="section-card">
+{% if logs %}<div class="table-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>Item</th><th>Detail</th></tr></thead><tbody>{% for r in logs %}<tr><td>{{ r.created_at }}</td><td><strong>{{ r.action|replace('_',' ')|title }}</strong></td><td>{{ r.target_type or '-' }}</td><td>{{ r.detail or '-' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="clean-empty"><h3>No activity yet</h3><p>Your security events will appear here.</p></div>{% endif %}
+</section>
+{% endblock %}

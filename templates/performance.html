@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Performance · QuantumVault{% endblock %}
+{% block content %}
+<section class="page-title-simple"><div><h1>Performance</h1><p>Measure the real cryptographic pipeline.</p></div><a class="toolbar-button" href="{{ url_for('export_performance_csv') }}">Export CSV</a></section>
+{% if summary %}
+<section class="stats-grid">
+  {% for s in summary %}<div class="stat-card"><span>{{ s.operation|replace('_',' ') }}</span><strong>{{ s.avg_total_ms or 0 }} ms</strong><small>{{ s.runs }} runs · {{ s.avg_throughput_mbps or 0 }} MB/s</small></div>{% endfor %}
+</section>
+{% endif %}
+<div class="performance-grid">
+  <section class="section-card"><span class="eyebrow">Benchmark</span><h2>Run a test</h2><form id="benchmarkForm" class="stack-form"><label>Label<input name="label" placeholder="PDF · 10 MB"></label><label>File<input type="file" name="file" required accept=".txt,.pdf,.jpg,.jpeg,.png,.csv,.zip"></label><label>Runs<input type="number" name="repeats" min="1" max="30" value="1" required></label><button class="primary-button" id="benchmarkBtn" type="submit">Run benchmark</button></form><div id="benchmarkResult" class="result-box hidden"></div></section>
+  <section class="section-card"><span class="eyebrow">Measured</span><h2>Stages</h2><div class="metric-friendly-list"><div><b>ML-KEM</b><span>Keygen · encapsulation · decapsulation</span></div><div><b>HKDF</b><span>256-bit key derivation</span></div><div><b>ChaCha20-Poly1305</b><span>Encryption · decryption</span></div><div><b>Whole pipeline</b><span>Total time · throughput · memory</span></div></div></section>
+</div>
+<section class="section-card"><div class="page-title-simple" style="margin-bottom:10px"><div><h2 style="margin:0">History</h2></div><span class="count-badge">{{ logs|length }}</span></div>{% if logs %}<details class="advanced-details"><summary>Show technical results</summary><div class="table-wrap"><table class="compact-table"><thead><tr><th>Time</th><th>Op</th><th>Size</th><th>Encap</th><th>Decap</th><th>HKDF</th><th>Enc</th><th>Dec</th><th>Total</th><th>MB/s</th></tr></thead><tbody>{% for r in logs %}<tr><td>{{ r.created_at }}</td><td>{{ r.operation|replace('_',' ') }}</td><td>{{ '%.2f'|format(r.file_size_bytes/1048576) }} MB</td><td>{{ r.mlkem_encap_ms or '-' }}</td><td>{{ r.mlkem_decap_ms or '-' }}</td><td>{{ r.hkdf_ms or '-' }}</td><td>{{ r.encrypt_ms or '-' }}</td><td>{{ r.decrypt_ms or '-' }}</td><td>{{ r.total_ms }}</td><td>{{ r.throughput_mbps or '-' }}</td></tr>{% endfor %}</tbody></table></div></details>{% else %}<div class="clean-empty" style="min-height:160px"><h3>No results yet</h3><p>Run your first benchmark above.</p></div>{% endif %}</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/performance.js') }}"></script>{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}How security works · QuantumVault{% endblock %}
+{% block content %}
+<section class="learn-hero-clean">
+  <div><h1>How your file is protected</h1><p>Three algorithms. Three clear jobs.</p></div>
+  {% if nav_user %}<a class="toolbar-button primary" href="{{ url_for('dashboard') }}">Try live demo</a>{% endif %}
+</section>
+
+<section class="learning-strip">
+  <div class="learn-node"><strong>File</strong><small>original bytes</small></div><span class="learn-arrow">→</span>
+  <div class="learn-node"><strong>ML-KEM</strong><small>shared secret</small></div><span class="learn-arrow">→</span>
+  <div class="learn-node"><strong>HKDF</strong><small>256-bit key</small></div><span class="learn-arrow">→</span>
+  <div class="learn-node"><strong>ChaCha + Poly1305</strong><small>ciphertext + tag</small></div>
+</section>
+
+<section class="algo-card-grid">
+  <article class="algo-card">
+    <div class="algo-card-header"><div class="algo-number">1</div><div><h2>ML-KEM-768</h2><span class="eyebrow">Secure secret</span></div></div>
+    <p>Uses the public key to create a shared secret and a KEM ciphertext. The secret key can later recover the same secret.</p>
+    <div class="algo-flow-mini"><div><b>IN</b><br>Public key</div><span>→</span><div><b>OUT</b><br>Secret + KEM ciphertext</div></div>
+  </article>
+  <article class="algo-card">
+    <div class="algo-card-header"><div class="algo-number">2</div><div><h2>HKDF-SHA256</h2><span class="eyebrow">Make file key</span></div></div>
+    <p>Turns the shared secret into the exact 32-byte key used for this file.</p>
+    <div class="algo-flow-mini"><div><b>IN</b><br>Secret + salt</div><span>→</span><div><b>OUT</b><br>256-bit file key</div></div>
+  </article>
+  <article class="algo-card">
+    <div class="algo-card-header"><div class="algo-number">3</div><div><h2>ChaCha20-Poly1305</h2><span class="eyebrow">Encrypt + verify</span></div></div>
+    <p>Encrypts the file and adds an authentication tag so modified data is rejected.</p>
+    <div class="algo-flow-mini"><div><b>IN</b><br>File + key + nonce</div><span>→</span><div><b>OUT</b><br>Ciphertext + tag</div></div>
+  </article>
+</section>
+
+<section class="reverse-flow"><h3>Download reverses the secure path</h3><div class="chip-flow"><span>Permission check</span><b>→</b><span>ML-KEM decapsulation</span><b>→</b><span>HKDF same key</span><b>→</b><span>Verify tag</span><b>→</b><span>Decrypt</span></div></section>
+<section class="reverse-flow"><h3>Secure sharing</h3><div class="chip-flow"><span>Same encrypted file</span><b>+</b><span>Recipient key envelope</span><b>→</b><span>Authorized download</span></div></section>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Shared · QuantumVault{% endblock %}
+{% block content %}
+<section class="page-title-simple">
+  <div><h1>Shared</h1><p>Give or receive access without duplicating the encrypted file.</p></div>
+  <a class="toolbar-button" href="{{ url_for('dashboard') }}">← My Vault</a>
+</section>
+
+<div class="share-grid-clean">
+  <section class="clean-card">
+    <h2>Share a file</h2>
+    {% if own_files %}
+    <form id="shareForm" class="share-form-clean">
+      <label>File
+        <select id="shareFileId" required>
+          <option value="">Choose a file</option>
+          {% for f in own_files %}<option value="{{ f.id }}" {% if selected_file_id == f.id %}selected{% endif %}>{{ f.original_filename }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Recipient email<input id="recipientEmail" type="email" placeholder="friend@example.com" required></label>
+      <button id="shareBtn" class="primary-button" type="submit">Create secure access</button>
+    </form>
+    <div id="shareMessage" class="status-message"></div>
+    {% else %}
+    <div class="clean-empty"><div class="empty-illustration">▤</div><h3>No file to share</h3><p>Upload a file first.</p><a class="primary-button" href="{{ url_for('dashboard') }}">Go to My Vault</a></div>
+    {% endif %}
+  </section>
+
+  <section class="clean-card">
+    <div class="page-title-simple" style="margin-bottom:12px"><div><h2 style="margin:0">Shared with me</h2></div><span class="count-badge">{{ incoming|length }}</span></div>
+    {% if incoming %}
+    <div class="shared-list-clean">
+      {% for s in incoming %}
+      <article class="shared-item-clean">
+        <span class="drive-file-icon">{{ s.file_type[:3]|upper }}</span>
+        <div><strong>{{ s.original_filename }}</strong><small>From {{ s.owner_name }} · {{ '%.2f'|format(s.original_size / 1048576) }} MB</small></div>
+        <button class="small-icon-button shared-download-btn" data-share-id="{{ s.share_id }}" data-name="{{ s.original_filename }}" title="Download">↓</button>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}<div class="clean-empty" style="min-height:180px"><div class="empty-illustration">♧</div><h3>Nothing shared yet</h3><p>Files shared with your account appear here.</p></div>{% endif %}
+  </section>
+</div>
+
+<section class="clean-card" style="margin-top:18px">
+  <div class="page-title-simple" style="margin-bottom:12px"><div><h2 style="margin:0">Your active shares</h2></div><span class="count-badge">{{ outgoing|length }}</span></div>
+  {% if outgoing %}
+  <div class="shared-list-clean">
+    {% for s in outgoing %}
+    <article class="shared-item-clean">
+      <div class="user-avatar" style="width:34px;height:34px">{{ s.recipient_name[:1]|upper }}</div>
+      <div><strong>{{ s.original_filename }}</strong><small>{{ s.recipient_name }} · {{ s.recipient_email }}</small></div>
+      <form method="post" action="{{ url_for('revoke_share', share_id=s.share_id) }}" onsubmit="return confirm('Revoke future access?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="toolbar-button danger-text" type="submit">Revoke</button>
+      </form>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}<div class="clean-empty" style="min-height:160px"><h3>No active shares</h3><p>Recipient permissions will be listed here.</p></div>{% endif %}
+</section>
+
+<div class="drawer-backdrop hidden" id="shareDrawerBackdrop"></div>
+<aside class="crypto-drawer" id="shareCryptoPanel">
+  <div class="drawer-head"><div><span class="drawer-kicker">SECURE SHARE DEMO</span><h2>How key sharing works</h2></div><button class="drawer-close" id="closeShareDrawer" type="button">×</button></div>
+  <div class="mode-switch"><button type="button" class="mode-btn active" data-mode="simple">Simple</button><button type="button" class="mode-btn" data-mode="technical">Technical</button></div>
+  <button type="button" id="shareReplayBtn" class="replay-button" disabled>↻ Replay last share demo</button>
+  <div id="shareReplayHint" class="demo-hint">Create a share or open a shared file once.</div>
+  <div id="shareVisualizerPlaceholder" class="demo-placeholder"><div class="demo-orb">♧</div><h3>Ready</h3><p>The big encrypted file stays in place. Only a small recipient-specific key envelope is created.</p></div>
+  <div id="shareTraceHeader" class="trace-operation hidden"><div><span id="shareTraceOperationLabel">SHARING</span><strong id="shareTraceOperationTitle">Protecting access</strong></div><span id="shareTraceCounter">0/0</span></div>
+  <div id="shareTraceList" class="trace-list hidden"></div><div id="shareTraceTotal" class="trace-total hidden"></div>
+  <div class="crypto-map"><span><b>1</b> Owner key<small>recover</small></span><i>→</i><span><b>2</b> ML-KEM<small>share secret</small></span><i>→</i><span><b>3</b> Envelope<small>wrap key</small></span></div>
+</aside>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/sharing.js') }}"></script>{% endblock %}

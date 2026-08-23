@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% block title %}My Vault · QuantumVault{% endblock %}
+
+{% block content %}
+<section class="vault-head">
+  <div class="breadcrumbs">
+    <a href="{{ url_for('dashboard') }}">My Vault</a>
+    {% for c in breadcrumbs %}
+      <span>›</span><a href="{{ url_for('dashboard', folder=c.id) }}">{{ c.name }}</a>
+    {% endfor %}
+  </div>
+  <div class="vault-title-row">
+    <div>
+      <h1>{% if q %}Search results{% elif current_folder %}{{ current_folder.name }}{% else %}My Vault{% endif %}</h1>
+      <p>{% if q %}Results for “{{ q }}”{% else %}Your encrypted files and folders{% endif %}</p>
+    </div>
+    <div class="view-controls">
+      <button class="small-icon-button active" id="listViewBtn" title="List view">☷</button>
+      <button class="small-icon-button" id="gridViewBtn" title="Grid view">▦</button>
+    </div>
+  </div>
+</section>
+
+<section class="quick-stats">
+  <div><strong>{{ stats.file_count }}</strong><span>files</span></div>
+  <div><strong>{{ '%.2f'|format(stats.total_encrypted / 1048576) }} MB</strong><span>encrypted storage</span></div>
+  <div><strong>{{ shared_count }}</strong><span>shared with you</span></div>
+</section>
+
+<section class="vault-toolbar">
+  <button class="toolbar-button primary" id="toolbarUploadBtn" type="button">↑ Upload</button>
+  <button class="toolbar-button" id="toolbarFolderBtn" type="button">＋ Folder</button>
+  <button class="toolbar-button" id="toolbarTextBtn" type="button">✎ Text file</button>
+  {% if q %}<a class="toolbar-button" href="{{ url_for('dashboard') }}">Clear search</a>{% endif %}
+</section>
+
+{% if folders %}
+<section class="vault-section">
+  <div class="section-label">Folders</div>
+  <div class="folder-grid">
+    {% for folder in folders %}
+    <article class="folder-card">
+      <a class="folder-open" href="{{ url_for('dashboard', folder=folder.id) }}">
+        <span class="folder-icon">▰</span>
+        <span class="folder-name">{{ folder.name }}</span>
+        <small>{{ folder.file_count }} file{{ '' if folder.file_count == 1 else 's' }}</small>
+      </a>
+      <details class="item-menu">
+        <summary>⋮</summary>
+        <div class="menu-popover">
+          <button type="button" class="folder-move-btn" data-id="{{ folder.id }}" data-name="{{ folder.name }}">Move folder</button>
+          <button type="button" class="folder-rename-btn" data-id="{{ folder.id }}" data-name="{{ folder.name }}">Rename</button>
+          <button type="button" class="folder-delete-btn danger-text" data-id="{{ folder.id }}" data-name="{{ folder.name }}">Delete folder</button>
+        </div>
+      </details>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="vault-section">
+  <div class="section-label">Files</div>
+  {% if files %}
+  <div class="file-view list-mode" id="fileView">
+    <div class="file-table-head">
+      <span>Name</span><span>Location</span><span>Modified</span><span>Size</span><span></span>
+    </div>
+    {% for f in files %}
+    <article class="drive-file-row">
+      <div class="file-name-cell">
+        <span class="drive-file-icon type-{{ f.file_type }}">{{ f.file_type[:3]|upper }}</span>
+        <div><strong>{{ f.original_filename }}</strong><small>🔒 encrypted</small></div>
+      </div>
+      <div class="file-location-cell">{% if q %}{{ f.folder_name or 'My Vault' }}{% else %}{{ current_folder.name if current_folder else 'My Vault' }}{% endif %}</div>
+      <div class="file-date-cell">{{ f.created_at }}</div>
+      <div class="file-size-cell">{{ '%.2f'|format(f.original_size / 1048576) }} MB</div>
+      <div class="file-actions-cell">
+        <button class="small-icon-button download-btn" data-id="{{ f.id }}" data-name="{{ f.original_filename }}" title="Download">↓</button>
+        <details class="item-menu file-menu">
+          <summary>⋮</summary>
+          <div class="menu-popover right">
+            <button type="button" class="download-menu-btn" data-id="{{ f.id }}" data-name="{{ f.original_filename }}">Download</button>
+            <button type="button" class="move-file-btn" data-id="{{ f.id }}" data-name="{{ f.original_filename }}">Move to folder</button>
+            <button type="button" class="rename-file-btn" data-id="{{ f.id }}" data-name="{{ f.original_filename }}">Rename</button>
+            <a href="{{ url_for('sharing', file_id=f.id) }}">Share securely</a>
+            <form method="post" action="{{ url_for('delete_file', file_id=f.id) }}" onsubmit="return confirm('Delete this encrypted file permanently?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="return_to_folder" value="{{ current_folder_id or '' }}">
+              <button class="danger-text" type="submit">Delete</button>
+            </form>
+          </div>
+        </details>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="clean-empty">
+    <div class="empty-illustration">▤</div>
+    <h3>{% if q %}No matching files{% else %}This folder is empty{% endif %}</h3>
+    <p>{% if q %}Try a different search.{% else %}Upload a file, create a text file, or make a folder.{% endif %}</p>
+    {% if not q %}<button class="primary-button" id="emptyUploadBtn" type="button">Upload a file</button>{% endif %}
+  </div>
+  {% endif %}
+</section>
+
+<!-- NEW menu -->
+<div class="new-menu hidden" id="newMenu">
+  <button type="button" data-action="folder"><span>▰</span><div><strong>New folder</strong><small>Organize files</small></div></button>
+  <button type="button" data-action="upload"><span>↑</span><div><strong>File upload</strong><small>Encrypt and store</small></div></button>
+  <button type="button" data-action="text"><span>✎</span><div><strong>New text file</strong><small>Create inside the vault</small></div></button>
+</div>
+
+<!-- Upload modal -->
+<div class="modal-backdrop hidden" id="uploadModal">
+  <div class="modal-card">
+    <div class="modal-head"><div><h2>Upload file</h2><p>It will be encrypted before storage.</p></div><button class="modal-close" type="button">×</button></div>
+    <form id="uploadForm">
+      <input type="hidden" name="folder_id" value="{{ current_folder_id or '' }}">
+      <label class="drop-zone" id="dropZone" for="fileInput">
+        <input class="file-input-hidden" type="file" id="fileInput" name="file" required accept=".txt,.pdf,.jpg,.jpeg,.png,.csv,.zip">
+        <span class="upload-circle">↑</span>
+        <strong id="fileChoiceTitle">Choose a file or drop it here</strong>
+        <span id="fileChoiceMeta">TXT · PDF · JPG/PNG · CSV · ZIP</span>
+      </label>
+      <div class="modal-status" id="uploadMessage"></div>
+      <div class="modal-actions"><button class="secondary-button modal-close" type="button">Cancel</button><button class="primary-button" id="uploadBtn" type="submit" disabled>Encrypt & upload</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Folder modal -->
+<div class="modal-backdrop hidden" id="folderModal">
+  <div class="modal-card compact-modal">
+    <div class="modal-head"><div><h2>New folder</h2><p>Create it in {% if current_folder %}{{ current_folder.name }}{% else %}My Vault{% endif %}.</p></div><button class="modal-close" type="button">×</button></div>
+    <form id="folderForm">
+      <input type="hidden" name="parent_id" value="{{ current_folder_id or '' }}">
+      <label class="field-label">Folder name<input id="folderName" name="name" maxlength="120" required autofocus></label>
+      <div class="modal-status" id="folderMessage"></div>
+      <div class="modal-actions"><button class="secondary-button modal-close" type="button">Cancel</button><button class="primary-button" type="submit">Create</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Text file modal -->
+<div class="modal-backdrop hidden" id="textModal">
+  <div class="modal-card text-modal-card">
+    <div class="modal-head"><div><h2>New secure text file</h2><p>Write here; only the encrypted result is stored.</p></div><button class="modal-close" type="button">×</button></div>
+    <form id="textFileForm">
+      <input type="hidden" id="textFolderId" value="{{ current_folder_id or '' }}">
+      <label class="field-label">File name<input id="textFileName" placeholder="notes.txt" required></label>
+      <label class="field-label">Content<textarea id="textFileContent" rows="9" placeholder="Start typing..." required></textarea></label>
+      <div class="modal-status" id="textFileMessage"></div>
+      <div class="modal-actions"><button class="secondary-button modal-close" type="button">Cancel</button><button class="primary-button" id="createTextBtn" type="submit">Create securely</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Move modal -->
+<div class="modal-backdrop hidden" id="moveModal">
+  <div class="modal-card compact-modal">
+    <div class="modal-head"><div><h2 id="moveTitle">Move item</h2><p id="moveFileLabel"></p></div><button class="modal-close" type="button">×</button></div>
+    <form id="moveForm">
+      <input type="hidden" id="moveKind" value="file"><input type="hidden" id="moveFileId">
+      <label class="field-label">Destination
+        <select id="moveFolderSelect">
+          <option value="">My Vault</option>
+          {% for folder in folder_options %}<option value="{{ folder.id }}">{{ folder.path_label }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="modal-status" id="moveMessage"></div>
+      <div class="modal-actions"><button class="secondary-button modal-close" type="button">Cancel</button><button class="primary-button" type="submit">Move</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Rename modal -->
+<div class="modal-backdrop hidden" id="renameModal">
+  <div class="modal-card compact-modal">
+    <div class="modal-head"><div><h2 id="renameTitle">Rename</h2><p>Update the display name only.</p></div><button class="modal-close" type="button">×</button></div>
+    <form id="renameForm">
+      <input type="hidden" id="renameKind"><input type="hidden" id="renameId">
+      <label class="field-label">Name<input id="renameName" required></label>
+      <div class="modal-status" id="renameMessage"></div>
+      <div class="modal-actions"><button class="secondary-button modal-close" type="button">Cancel</button><button class="primary-button" type="submit">Save</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Crypto demo drawer -->
+<div class="drawer-backdrop hidden" id="cryptoDrawerBackdrop"></div>
+<aside class="crypto-drawer" id="cryptoDrawer" aria-label="Live cryptography demonstration">
+  <div class="drawer-head">
+    <div><span class="drawer-kicker">LIVE CRYPTO DEMO</span><h2>What happens underneath</h2></div>
+    <button class="drawer-close" id="closeCryptoDrawer" type="button">×</button>
+  </div>
+
+  <div class="mode-switch">
+    <button type="button" class="mode-btn active" data-mode="simple">Simple</button>
+    <button type="button" class="mode-btn" data-mode="technical">Technical</button>
+  </div>
+
+  <button type="button" id="replayDemoBtn" class="replay-button" disabled>↻ Replay last demo</button>
+  <div id="lastDemoHint" class="demo-hint">Upload, create, or download once to record a demo.</div>
+
+  <div id="visualizerPlaceholder" class="demo-placeholder">
+    <div class="demo-orb">◈</div>
+    <h3>Ready</h3>
+    <p>Your normal file actions stay simple. Open this panel whenever you want to see the cryptography behind them.</p>
+  </div>
+
+  <div id="traceHeader" class="trace-operation hidden">
+    <div><span id="traceOperationLabel">ENCRYPTION</span><strong id="traceOperationTitle">Protecting your file</strong></div>
+    <span id="traceCounter">0/0</span>
+  </div>
+  <div id="traceList" class="trace-list hidden"></div>
+  <div id="traceTotal" class="trace-total hidden"></div>
+
+  <div class="crypto-map">
+    <span><b>1</b> ML-KEM<small>shared secret</small></span>
+    <i>→</i>
+    <span><b>2</b> HKDF<small>256-bit key</small></span>
+    <i>→</i>
+    <span><b>3</b> ChaCha + Poly1305<small>encrypt + verify</small></span>
+  </div>
+</aside>
+{% endblock %}
+
+{% block scripts %}<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endblock %}
